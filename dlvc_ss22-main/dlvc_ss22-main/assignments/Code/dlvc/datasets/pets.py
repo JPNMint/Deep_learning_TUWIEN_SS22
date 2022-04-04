@@ -50,10 +50,11 @@ class PetsDataset(ClassificationDataset):
             
             
         #batches.meta are the label names
-        #get label names 
-        label = unpickle(path)
-        #return label
-            
+        #get cat and dog index of labels in the batches
+        meta_batches = unpickle(path)
+        labels = meta_batches[b'label_names']
+        index_cat = labels.index(b'cat')
+        index_dog = labels.index(b'dog')            
             
             
 
