@@ -1,5 +1,23 @@
 
 from ..dataset import Sample, Subset, ClassificationDataset
+import pandas as pd
+import numpy as np
+import os
+##needed to use the CIFAR-10 df
+
+def unpickle(file):
+    import pickle
+    with open(file, 'rb') as fo:
+        dict = pickle.load(fo, encoding='bytes')
+    return dict
+
+
+
+
+
+
+CAT=0
+DOG=1
 
 class PetsDataset(ClassificationDataset):
     '''
@@ -22,7 +40,22 @@ class PetsDataset(ClassificationDataset):
         '''
 
         # TODO implement
-        # See the CIFAR-10 website on how to load the data files
+        ##VALUE ERRORS
+        if not os.path.exists(fdir):
+            raise ValueError('"{}" cannot be found'.format(fdir))
+            
+        path = os.path.join(fdir, 'batches.meta')
+        if not os.path.exists(path):
+            raise ValueError('"{}" cannot be found'.format(path))
+            
+            
+        #batches.meta are the label names
+        #get label names 
+        label = unpickle(path)
+        #return label
+            
+            
+            
 
         pass
 
