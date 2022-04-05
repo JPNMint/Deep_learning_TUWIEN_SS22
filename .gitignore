@@ -261,4 +261,7 @@ GitHub.sublime-settings
 # virtual environment
 venv
 
+# dataset
+cifar-10-batches-py
+
 # End of https://www.toptal.com/developers/gitignore/api/pycharm,sublimetext,linux,macos,intellij
