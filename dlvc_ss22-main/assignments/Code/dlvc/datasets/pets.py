@@ -56,8 +56,18 @@ class PetsDataset(ClassificationDataset):
         index_cat = labels.index(b'cat')
         index_dog = labels.index(b'dog')            
             
-            
+        ## read in batch files
+        ## 10.000 images per batch, each having 1000 images per class
+        ## 50.000 in training batches
+        ## 10.000 in test
+        ## meaning: get all images with cat and dog label from the batches and we end up
+        ## with 10.000 (5.000 x 2) 
 
+
+        ## use of dir for subsets mapping?
+
+        ## for loop through files to label images?
+        ##img as numpy arrays in bgr order
         pass
 
     def __len__(self) -> int:
