@@ -1,7 +1,3 @@
-from dlvc.datasets.pets import PetsDataset
-from dlvc.dataset import Subset
-from dlvc.batches import BatchGenerator
-from dlvc.test import Accuracy
 import dlvc.ops as ops
 import numpy as np
 import torch
@@ -23,7 +19,7 @@ op = ops.chain([
     ops.vectorize(),
     ops.type_cast(np.float32),
     ops.add(-127.5),
-    ops.mul(1/127.5),
+    ops.mul(1 / 127.5),
 ])
 
 
