@@ -1,23 +1,26 @@
-
 from ..dataset import Sample, Subset, ClassificationDataset
-import pandas as pd
+
 import numpy as np
 import os
-##needed to use the CIFAR-10 df
+import pickle
+
 
 def unpickle(file):
-    import pickle
-    with open(file, 'rb') as fo:
-        dict = pickle.load(fo, encoding='bytes')
+    try:
+        with open(file, 'rb') as fo:
+            dict = pickle.load(fo, encoding='bytes')
+    except FileNotFoundError:
+        raise ValueError('"{}" cannot be found'.format(file))
+
     return dict
 
 
+subset_to_batch = {
+    Subset.TRAINING: ['data_batch_1', 'data_batch_2', 'data_batch_3', 'data_batch_4'],
+    Subset.VALIDATION: ['data_batch_5'],
+    Subset.TEST: ['test_batch']
+}
 
-
-
-
-CAT=0
-DOG=1
 
 class PetsDataset(ClassificationDataset):
     '''
@@ -39,45 +42,33 @@ class PetsDataset(ClassificationDataset):
         and returned as uint8 numpy arrays with shape (32, 32, 3), in BGR channel order.
         '''
 
-        # TODO implement
-        ##VALUE ERRORS
-        if not os.path.exists(fdir):
-            raise ValueError('"{}" cannot be found'.format(fdir))
-            
+        # TODO: maybe refactor?
         path = os.path.join(fdir, 'batches.meta')
-        if not os.path.exists(path):
-            raise ValueError('"{}" cannot be found'.format(path))
-            
-            
-        #batches.meta are the label names
-        #get cat and dog index of labels in the batches
+
         meta_batches = unpickle(path)
         labels = meta_batches[b'label_names']
         index_cat = labels.index(b'cat')
-        index_dog = labels.index(b'dog')            
-            
-        ## read in batch files
-        ## 10.000 images per batch, each having 1000 images per class
-        ## 50.000 in training batches
-        ## 10.000 in test
-        ## meaning: get all images with cat and dog label from the batches and we end up
-        ## with 10.000 (5.000 x 2) 
+        index_dog = labels.index(b'dog')
 
+        self.idx_to_label = []
+        self.imgs = np.empty((0, 3072), dtype=np.uint8)
+        for f in subset_to_batch[subset]:
+            b = unpickle(os.path.join(fdir, f))
+            labels = np.array(b[b'labels'])
 
-        ## use of dir for subsets mapping?
+            self.idx_to_label += [0 if l == index_cat else 1 for l in
+                                  (labels[(labels == index_cat) | (labels == index_dog)]).tolist()]
 
-        ## for loop through files to label images?
-        ##img as numpy arrays in bgr order
-        pass
+            self.imgs = np.concatenate((self.imgs, b[b'data'][(labels == index_cat) | (labels == index_dog)]))
+
+        self.num_classes = len(set(self.idx_to_label))
 
     def __len__(self) -> int:
         '''
         Returns the number of samples in the dataset.
         '''
 
-        # TODO implement
-
-        pass
+        return len(self.idx_to_label)
 
     def __getitem__(self, idx: int) -> Sample:
         '''
@@ -85,15 +76,15 @@ class PetsDataset(ClassificationDataset):
         Raises IndexError if the index is out of bounds. Negative indices are not supported.
         '''
 
-        # TODO implement
+        if idx < 0:
+            raise IndexError("Negative indices are not supported")
 
-        pass
+        return Sample(idx, np.reshape(self.imgs[idx], (3, 32, 32)).transpose((1, 2, 0))[:, :, ::-1],
+                      self.idx_to_label[idx])
 
     def num_classes(self) -> int:
         '''
         Returns the number of classes.
         '''
 
-        # TODO implement
-
-        pass
+        return self.num_classes
