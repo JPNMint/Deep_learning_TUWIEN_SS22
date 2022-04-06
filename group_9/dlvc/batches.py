@@ -1,7 +1,11 @@
+import math
 import typing
+
+import numpy as np
 
 from .dataset import Dataset
 from .ops import Op
+
 
 class Batch:
     '''
@@ -17,6 +21,7 @@ class Batch:
         self.label = None
         self.idx = None
 
+
 class BatchGenerator:
     '''
     Batch generator.
@@ -26,7 +31,7 @@ class BatchGenerator:
       idx: numpy array with shape (s,) encoding the indices of each sample in the original dataset.
     '''
 
-    def __init__(self, dataset: Dataset, num: int, shuffle: bool, op: Op=None):
+    def __init__(self, dataset: Dataset, num: int, shuffle: bool, op: Op = None):
         '''
         Ctor.
         Dataset is the dataset to iterate over.
@@ -37,9 +42,33 @@ class BatchGenerator:
         Raises ValueError on invalid argument values, such as if num is > len(dataset).
         '''
 
-        # TODO implement
+        if not isinstance(dataset, Dataset):
+            raise TypeError("Invalid argument type for argument dataset")
 
-        pass
+        if not isinstance(num, int):
+            raise TypeError("Invalid argument type for argument num")
+
+        if not isinstance(shuffle, bool):
+            raise TypeError("Invalid argument type for argument shuffle")
+
+        if not callable(op) and op is not None:
+            raise TypeError("Invalid argument type for argument op")
+
+        if num > len(dataset):
+            raise ValueError("Batch size must not be larger than dataset length")
+
+        self.dataset = dataset
+        self.op = op
+        self.num_batches = math.ceil(len(self.dataset) / num)
+
+        idxs = np.arange(0, len(dataset))
+        if shuffle:
+            np.random.shuffle(idxs)
+
+        # TODO: shuffle once at init time or re-shuffle when each batch is returned
+        self.batches = np.split(idxs, np.arange(num, len(dataset), num))
+
+
 
     def __len__(self) -> int:
         '''
@@ -47,16 +76,31 @@ class BatchGenerator:
             This is identical to the total number of batches yielded every time the __iter__ method is called.
         '''
 
-        # TODO implement
+        return self.num_batches
 
-        pass
 
     def __iter__(self) -> typing.Iterable[Batch]:
         '''
         Iterate over the wrapped dataset, returning the data as batches.
         '''
 
-        # TODO implement
-        # The "yield" keyword makes this easier
+        for batch in self.batches:
+            mini_batch = Batch()
 
-        pass
+            mini_batch.label = np.empty(len(batch), dtype=np.int64)
+            mini_batch.idx = np.empty(len(batch), dtype=np.int64)
+
+            data = []
+            for i, idx in enumerate(batch):
+                sample = self.dataset[idx]
+
+                if self.op is not None:
+                    data.append(self.op(sample[1]))
+                else:
+                    data.append(sample[1])
+
+                mini_batch.data = np.array(data)
+                mini_batch.idx[i] = sample[0]
+                mini_batch.label[i] = sample[2]
+
+            yield mini_batch

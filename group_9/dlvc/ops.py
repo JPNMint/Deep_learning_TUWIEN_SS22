@@ -23,43 +23,35 @@ def type_cast(dtype: np.dtype) -> Op:
     Cast numpy arrays to the given type.
     '''
 
-    # TODO implement (see above for guidance).
-
-    pass
+    return lambda sample: sample.astype(dtype)
 
 def vectorize() -> Op:
     '''
     Vectorize numpy arrays via "numpy.ravel()".
     '''
 
-    # TODO implement (see above for guidance).
-
-    pass
+    return lambda sample: sample.ravel()
 
 def add(val: float) -> Op:
     '''
     Add a scalar value to all array elements.
     '''
 
-    # TODO implement (see above for guidance).
-
-    pass
+    return lambda sample: sample + val
 
 def mul(val: float) -> Op:
     '''
     Multiply all array elements by the given scalar.
     '''
 
-    # TODO implement (see above for guidance).
-
-    pass
+    return lambda sample: sample * val
 
 def hwc2chw() -> Op:
     '''
     Flip a 3D array with shape HWC to shape CHW.
     '''
 
-    # TODO implement (see np.transpose)
+    # TODO implement (see np.transpose) -- assignment 2/3
 
     pass
 
@@ -68,7 +60,7 @@ def hflip() -> Op:
     Flip arrays with shape HWC horizontally with a probability of 0.5.
     '''
 
-    # TODO implement (numpy.flip will be helpful)
+    # TODO implement (numpy.flip will be helpful) -- assignment 2/3
 
     pass
 
@@ -80,7 +72,7 @@ def rcrop(sz: int, pad: int, pad_mode: str) -> Op:
     Raises ValueError if sz exceeds the array width/height after padding.
     '''
 
-    # TODO implement
+    # TODO implement -- assignment 2/3
     # https://numpy.org/doc/stable/reference/generated/numpy.pad.html will be helpful
 
     pass
