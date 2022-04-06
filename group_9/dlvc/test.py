@@ -68,9 +68,9 @@ class Accuracy(PerformanceMeasure):
         Resets the internal state.
         '''
 
-        # TODO implement
+        self.correct = 0
+        self.total = 0
 
-        pass
 
     def update(self, prediction: np.ndarray, target: np.ndarray):
         '''
@@ -81,19 +81,25 @@ class Accuracy(PerformanceMeasure):
         Raises ValueError if the data shape or values are unsupported.
         '''
 
-        # TODO implement
+        target_unique = np.unique(target) # unique and sorted values of target
 
-        pass
+        if len(prediction.shape) != 2 or len(target.shape) != 1 or prediction.shape[0] != target.shape[0]:
+            raise ValueError("Data shapes are not correct or dimension do not match")
+
+        if target_unique[0] != 0 or target_unique[-1] != (prediction.shape[1]-1):
+            raise ValueError("Wrong value range in argument target -- values have to be between 0 and c-1")
+
+        self.correct += sum(np.argmax(prediction, axis=1) == target)
+        self.total += target.shape[0]
 
     def __str__(self):
         '''
         Return a string representation of the performance.
         '''
 
-        # TODO implement
         # return something like "accuracy: 0.395"
 
-        pass
+        return f"accuracy: {self.accuracy():.3f}"
 
     def __lt__(self, other) -> bool:
         '''
@@ -103,9 +109,10 @@ class Accuracy(PerformanceMeasure):
 
         # See https://docs.python.org/3/library/operator.html for how these
         # operators are used to compare instances of the Accuracy class
-        # TODO implement
+        if type(self) != type(other):
+            raise TypeError("Types of measures differ")
 
-        pass
+        return self.accuracy() < other.accuracy()
 
     def __gt__(self, other) -> bool:
         '''
@@ -113,9 +120,10 @@ class Accuracy(PerformanceMeasure):
         Raises TypeError if the types of both measures differ.
         '''
 
-        # TODO implement
+        if type(self) != type(other):
+            raise TypeError("Types of measures differ")
 
-        pass
+        return self.accuracy() > other.accuracy()
 
     def accuracy(self) -> float:
         '''
@@ -123,7 +131,7 @@ class Accuracy(PerformanceMeasure):
         Returns 0 if no data is available (after resets).
         '''
 
-        # TODO implement
-        # on this basis implementing the other methods is easy (one line)
-
-        pass
+        if self.total == 0:
+            return 0
+        else:
+            return self.correct/self.total
