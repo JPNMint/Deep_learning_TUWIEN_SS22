@@ -65,10 +65,32 @@ class BatchGenerator:
         if shuffle:
             np.random.shuffle(idxs)
 
-        # TODO: shuffle once at init time or re-shuffle when each batch is returned
-        self.batches = np.split(idxs, np.arange(num, len(dataset), num))
+        self.batches = []
+        for batch_idxs in np.split(idxs, np.arange(num, len(dataset), num)):
+            batch = Batch()
 
+            #batch.label = np.empty(len(batch_idxs), dtype=np.int64)
+            #batch.idx = np.empty(len(batch_idxs), dtype=np.int64)
 
+            data = []
+            label = []
+            idx = []
+            for i, batch_idx in enumerate(batch_idxs):
+                sample = self.dataset[batch_idx]
+
+                if self.op is not None:
+                    data.append(self.op(sample.data))
+                else:
+                    data.append(sample.data)
+
+                label.append(sample.label)
+                idx.append(sample.idx)
+
+            batch.data = np.array(data)
+            batch.label = np.array(label, dtype=np.int64)
+            batch.index = np.array(idx, dtype=np.int64)
+
+            self.batches.append(batch)
 
     def __len__(self) -> int:
         '''
@@ -78,29 +100,10 @@ class BatchGenerator:
 
         return self.num_batches
 
-
     def __iter__(self) -> typing.Iterable[Batch]:
         '''
         Iterate over the wrapped dataset, returning the data as batches.
         '''
 
         for batch in self.batches:
-            mini_batch = Batch()
-
-            mini_batch.label = np.empty(len(batch), dtype=np.int64)
-            mini_batch.idx = np.empty(len(batch), dtype=np.int64)
-
-            data = []
-            for i, idx in enumerate(batch):
-                sample = self.dataset[idx]
-
-                if self.op is not None:
-                    data.append(self.op(sample[1]))
-                else:
-                    data.append(sample[1])
-
-                mini_batch.data = np.array(data)
-                mini_batch.idx[i] = sample[0]
-                mini_batch.label[i] = sample[2]
-
-            yield mini_batch
+            yield batch
