@@ -1,12 +1,15 @@
 import os
 
+import dlvc.batches as batches
+import dlvc.datasets.pets as datasets
+from dlvc.dataset import Subset
 import dlvc.ops as ops
+from dlvc.test import Accuracy
+
 import numpy as np
 import torch
 import torch.nn as nn
-import dlvc.datasets.pets as datasets
-from dlvc.dataset import Subset
-import dlvc.batches as batches
+import torch.optim as optim
 
 
 
