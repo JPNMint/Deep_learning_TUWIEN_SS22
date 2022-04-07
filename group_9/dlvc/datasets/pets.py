@@ -61,7 +61,7 @@ class PetsDataset(ClassificationDataset):
 
             self.imgs = np.concatenate((self.imgs, b[b'data'][(labels == index_cat) | (labels == index_dog)]))
 
-        self.num_classes = len(set(self.idx_to_label))
+        self._num_classes = len(set(self.idx_to_label))
 
     def __len__(self) -> int:
         '''
@@ -87,4 +87,4 @@ class PetsDataset(ClassificationDataset):
         Returns the number of classes.
         '''
 
-        return self.num_classes
+        return self._num_classes
