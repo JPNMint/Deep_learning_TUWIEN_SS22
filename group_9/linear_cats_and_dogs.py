@@ -12,7 +12,6 @@ import torch.nn as nn
 import torch.optim as optim
 
 
-
 # TODO: Define the network architecture of your linear classifier.
 class LinearClassifier(torch.nn.Module):
     def __init__(self, input_dim, num_classes):
@@ -35,7 +34,7 @@ op = ops.chain([
 
 DATASET_PATH = os.path.join(os.pardir, "cifar-10-batches-py")
 MODEL_FILENAME = "best_model.pt"
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu") # use CUDA, if available
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # use CUDA, if available
 
 train = datasets.PetsDataset(DATASET_PATH, Subset.TRAINING)
 train_batches = batches.BatchGenerator(train, len(train), False, op)
@@ -48,7 +47,7 @@ test_batches = batches.BatchGenerator(test, len(test), False, op)
 
 # TODO: Create the LinearClassifier, loss function and optimizer. 
 model = LinearClassifier(3072, train.num_classes()).to(device=DEVICE)  # TODO: remove hard coded value?
-loss_func = nn.CrossEntropyLoss()
+criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters())
 
 '''
@@ -62,6 +61,7 @@ val_acc_best = Accuracy()
 
 for e in range(num_epochs):
     model.train()
+    avg_train_loss = 0.0
     for train_batch in train_batches:
         optimizer.zero_grad()
 
@@ -69,9 +69,13 @@ for e in range(num_epochs):
         labels = torch.tensor(train_batch.label).to(device=DEVICE)
 
         output = model(data)
-        loss = loss_func(output, labels)
+        loss = criterion(output, labels)
         loss.backward()
         optimizer.step()
+
+        avg_train_loss += loss.item() * data.size(0)
+
+    avg_train_loss /= len(train_batches.dataset)
 
     model.eval()
     with torch.no_grad():
@@ -85,10 +89,9 @@ for e in range(num_epochs):
             val_acc_best = val_acc_curr
             torch.save(model.state_dict(), os.path.join(os.curdir, MODEL_FILENAME))
 
-    print(f"epoch {e + 1}\ntrain loss: {loss:.3f}\nval acc: {val_acc_curr.accuracy():.3f}")
+    print(f"epoch {e + 1}\ntrain loss: {avg_train_loss:.3f}\nval acc: {val_acc_curr.accuracy():.3f}")
 
 print(f"--------------------\nval acc (best): {val_acc_best.accuracy():.3f}")
-
 
 model.load_state_dict(torch.load(os.path.join(os.curdir, MODEL_FILENAME)))
 model.eval()
