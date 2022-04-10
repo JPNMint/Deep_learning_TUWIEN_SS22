@@ -68,10 +68,6 @@ class BatchGenerator:
         self.batches = []
         for batch_idxs in np.split(idxs, np.arange(num, len(dataset), num)):
             batch = Batch()
-
-            #batch.label = np.empty(len(batch_idxs), dtype=np.int64)
-            #batch.idx = np.empty(len(batch_idxs), dtype=np.int64)
-
             data = []
             label = []
             idx = []
