@@ -19,7 +19,7 @@ class PetsDataset(ClassificationDataset):
     Dataset of cat and dog images from CIFAR-10 (class 0: cat, class 1: dog).
     '''
 
-    subset_to_file = {
+    subset_to_files = {
         Subset.TRAINING: ['data_batch_1', 'data_batch_2', 'data_batch_3', 'data_batch_4'],
         Subset.VALIDATION: ['data_batch_5'],
         Subset.TEST: ['test_batch']
@@ -47,7 +47,7 @@ class PetsDataset(ClassificationDataset):
 
         data = []
         self.idx_to_label = []
-        for file in PetsDataset.subset_to_file[subset]:
+        for file in PetsDataset.subset_to_files[subset]:
             b = unpickle(os.path.join(fdir, file))
 
             orig_labels = np.array(b[b'labels'])
