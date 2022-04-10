@@ -58,35 +58,23 @@ class BatchGenerator:
             raise ValueError("Batch size must not be larger than dataset length")
 
         self.dataset = dataset
-        self.op = op
+        self.shuffle = shuffle
+        self.op = op if op is not None else lambda x: x
         self.num_batches = math.ceil(len(self.dataset) / num)
+        self.batches_idx_boundaries = np.arange(num, len(self.dataset), num)
 
-        idxs = np.arange(0, len(dataset))
-        if shuffle:
-            np.random.shuffle(idxs)
-
-        self.batches = []
-        for batch_idxs in np.split(idxs, np.arange(num, len(dataset), num)):
-            batch = Batch()
-            data = []
-            label = []
-            idx = []
-            for i, batch_idx in enumerate(batch_idxs):
-                sample = self.dataset[batch_idx]
-
-                if self.op is not None:
-                    data.append(self.op(sample.data))
-                else:
-                    data.append(sample.data)
-
-                label.append(sample.label)
-                idx.append(sample.idx)
-
-            batch.data = np.array(data)
-            batch.label = np.array(label, dtype=np.int64)
-            batch.index = np.array(idx, dtype=np.int64)
-
-            self.batches.append(batch)
+        # prepare dataset for batch creation
+        data = []
+        labels = []
+        idxs = []
+        for i in np.arange(0, len(self.dataset)):
+            sample = self.dataset[i]
+            data.append(self.op(sample.data))
+            labels.append(sample.label)
+            idxs.append(sample.idx)
+        self.data = np.array(data)
+        self.labels = np.array(labels, dtype=np.int64)
+        self.idxs = np.array(idxs, dtype=np.int64)
 
     def __len__(self) -> int:
         '''
@@ -100,6 +88,12 @@ class BatchGenerator:
         '''
         Iterate over the wrapped dataset, returning the data as batches.
         '''
+        idxs = np.random.permutation(self.idxs) if self.shuffle else self.idxs
 
-        for batch in self.batches:
+        for batch_idxs in np.split(idxs, self.batches_idx_boundaries):
+            batch = Batch()
+            batch.data = self.data[batch_idxs]
+            batch.label = self.labels[batch_idxs]
+            batch.index = self.idxs[batch_idxs]
+
             yield batch
