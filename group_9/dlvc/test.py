@@ -2,6 +2,7 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 
+
 class PerformanceMeasure(metaclass=ABCMeta):
     '''
     A performance measure.
@@ -71,7 +72,6 @@ class Accuracy(PerformanceMeasure):
         self.correct = 0
         self.total = 0
 
-
     def update(self, prediction: np.ndarray, target: np.ndarray):
         '''
         Update the measure by comparing predicted data with ground-truth target data.
@@ -81,12 +81,12 @@ class Accuracy(PerformanceMeasure):
         Raises ValueError if the data shape or values are unsupported.
         '''
 
-        target_unique = np.unique(target) # unique and sorted values of target
+        target_unique = np.unique(target)
 
         if len(prediction.shape) != 2 or len(target.shape) != 1 or prediction.shape[0] != target.shape[0]:
             raise ValueError("Data shapes are not correct or dimension do not match")
 
-        if target_unique[0] != 0 or target_unique[-1] != (prediction.shape[1]-1):
+        if target_unique[0] != 0 or target_unique[-1] != (prediction.shape[1] - 1):
             raise ValueError("Wrong value range in argument target -- values have to be between 0 and c-1")
 
         self.correct += sum(np.argmax(prediction, axis=1) == target)
@@ -99,7 +99,7 @@ class Accuracy(PerformanceMeasure):
 
         # return something like "accuracy: 0.395"
 
-        return f"accuracy: {self.accuracy():.3f}"
+        return f"acc: {self.accuracy():.3f}"  # format according to output format in ass. 1 part 3
 
     def __lt__(self, other) -> bool:
         '''
@@ -132,6 +132,6 @@ class Accuracy(PerformanceMeasure):
         '''
 
         if self.total == 0:
-            return 0
+            return 0.0
         else:
-            return self.correct/self.total
+            return self.correct / self.total
