@@ -65,7 +65,7 @@ training and save the best performing model.
 After training, measure the classification accuracy of the best perfroming model on the test dataset. Document your 
 findings in the report.
 '''
-num_epochs = 100
+num_epochs = 150
 val_acc_best = Accuracy()
 
 # train and validate
