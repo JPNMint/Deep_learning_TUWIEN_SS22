@@ -81,13 +81,12 @@ class Accuracy(PerformanceMeasure):
         Raises ValueError if the data shape or values are unsupported.
         '''
 
-        target_unique = np.unique(target)
-
         if len(prediction.shape) != 2 or len(target.shape) != 1 or prediction.shape[0] != target.shape[0]:
-            raise ValueError("Data shapes are not correct or dimension do not match")
+            raise ValueError("Shape of argument 'prediction' or 'target' is not correct or dimensions do not match")
 
+        target_unique = np.unique(target)
         if target_unique[0] != 0 or target_unique[-1] != (prediction.shape[1] - 1):
-            raise ValueError("Wrong value range in argument target -- values have to be between 0 and c-1")
+            raise ValueError(f"Wrong value range in argument 'target' -- values have to be between 0 and {prediction.shape[1] - 1}")
 
         self.correct += sum(np.argmax(prediction, axis=1) == target)
         self.total += target.shape[0]
