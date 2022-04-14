@@ -189,6 +189,37 @@ class Part2(unittest.TestCase):
         with self.assertRaises(ValueError):
             BatchGenerator(d, len(d)+1, False)
 
+    def test_first_sample_of_first_training_batch_wo_shuffling(self):
+        op = ops.chain([
+            ops.vectorize(),
+            ops.type_cast(np.float32),
+            ops.add(-127.5),
+            ops.mul(1 / 127.5),
+        ])
+
+        d = PetsDataset(dataset_path, Subset.TRAINING)
+        bg = BatchGenerator(d, 500, False, op)
+
+        for b in bg:
+            np.testing.assert_almost_equal(b.data[0][:5], np.array([-0.09019608, -0.01960784, -0.01960784, -0.28627452, -0.20784315]), decimal=8)
+            self.assertEqual(b.label[0], 0)
+            break
+
+    def test_first_sample_of_first_training_batch_w_shuffling(self):
+        op = ops.chain([
+            ops.vectorize(),
+            ops.type_cast(np.float32),
+            ops.add(-127.5),
+            ops.mul(1 / 127.5),
+        ])
+
+        d = PetsDataset(dataset_path, Subset.TRAINING)
+        bg = BatchGenerator(d, 500, True, op)
+
+        for b in bg:
+            self.assertTrue(np.any(np.not_equal(b.data[0][:5], np.array([-0.09019608, -0.01960784, -0.01960784, -0.28627452, -0.20784315]))))
+            break
+
 
 if __name__ == '__main__':
     unittest.main()
