@@ -32,8 +32,10 @@ def load_image(fpath: str) -> np.ndarray:
     Loads a 2D function from a PNG file and normalizes it to the interval [0, 1]
     Raises FileNotFoundError if the file does not exist.
     '''
-
-    # TODO implement
+    img = cv2.imread(fpath, cv2.IMREAD_UNCHANGED)
+    if img is None:
+        raise FileNotFoundError(f"{fpath} could not be found")
+    return (img - np.min(img))/np.ptp(img)
 
 class Fn:
     '''
