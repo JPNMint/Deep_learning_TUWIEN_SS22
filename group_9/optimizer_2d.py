@@ -110,12 +110,13 @@ class Fn:
         return Vec2(df_x1, df_x2)
 
 
+# A point according to the OpenCV format (column, row)
 OpenCVPoint = namedtuple('OpenCVPoint', ['x2', 'x1'])
 
 
 def locToOpenCVPoint(t: Tensor) -> OpenCVPoint:
     """
-    Converts a tensor in the containing a location in the format (x1, x2) to an OpenCVPoint (x2, x1)
+    Converts a tensor containing a location in the format (row,column) to an OpenCVPoint (column,row)
     """
     return OpenCVPoint(round(t[1].item()), round(t[0].item()))
 
