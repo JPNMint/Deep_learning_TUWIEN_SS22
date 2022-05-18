@@ -4,10 +4,9 @@ from collections import namedtuple
 import cv2
 import numpy as np
 import torch
-
-# A 2D vector. Used in Fn as an evaluation point.
 from torch import Tensor
 
+# A 2D vector. Used in Fn as an evaluation point.
 Vec2 = namedtuple('Vec2', ['x1', 'x2'])
 
 
@@ -91,22 +90,19 @@ class Fn:
         '''
 
         if self.eps <= 0:
-            raise ValueError("eps has to be > 0")
+            raise ValueError("Argument 'eps has to be > 0")
 
         # out-of-bounds check omitted (ValueError will be propagated by __call__)
 
         x1 = loc.x1
         x2 = loc.x2
 
-        # partial derivation x1
-        f_x1_plus_eps = self.__call__(Vec2(x1 + self.eps, x2))
-        f_x1_minus_eps = self.__call__(Vec2(x1 - self.eps, x2))
-        df_x1 = (f_x1_plus_eps - f_x1_minus_eps) / 2 * self.eps
-
-        # partial derivation x2
-        f_x2_plus_eps = self.__call__(Vec2(x1, x2 + self.eps))
-        f_x2_minus_eps = self.__call__(Vec2(x1, x2 - self.eps))
-        df_x2 = (f_x2_plus_eps - f_x2_minus_eps) / 2 * self.eps
+        # calculate numerical gradient using the formula f'(x) = (f(x+eps) - f(x-eps)) / 2*eps (generalized to two
+        # dimensions)
+        # partial derivative in direction x1
+        df_x1 = (self.__call__(Vec2(x1 + self.eps, x2)) - self.__call__(Vec2(x1 + self.eps, x2))) / 2 * self.eps
+        # partial derivative in direction x2
+        df_x2 = (self.__call__(Vec2(x1, x2 + self.eps)) - self.__call__(Vec2(x1, x2 - self.eps))) / 2 * self.eps
 
         return Vec2(df_x1, df_x2)
 
@@ -140,8 +136,8 @@ if __name__ == '__main__':
     parser.add_argument('--nesterov', action='store_true', help='Use Nesterov momentum')
     parser.add_argument('--optimizer', type=str, default="SGD", choices=("SGD", "Adam"), help='Desired optimizer')
     parser.add_argument('--wait', type=float, default=0,
-                        help='Number of seconds the canvas should still be shown after the optimization is finished ('
-                             'e.g., used to take screenshots)')
+                        help='Number of seconds the canvas should be shown after the optimization is finished ('
+                             'e.g., for taking screenshots)')
     parser.add_argument('--line_color', type=str, default="red", choices=("red", "orange", "green"))
     args = parser.parse_args()
 
@@ -152,15 +148,19 @@ if __name__ == '__main__':
 
     # PyTorch uses tensors which are very similar to numpy arrays but hold additional values such as gradients
     loc = torch.tensor([args.sx1, args.sx2], requires_grad=True)
+
+    # Init chosen optimizer
     if args.optimizer == "SGD":
         print("Chosen optimizer: " + args.optimizer)
         optimizer = torch.optim.SGD([loc], lr=args.learning_rate, momentum=args.beta, nesterov=args.nesterov)
     elif args.optimizer == "Adam":
         print("Chosen optimizer: " + args.optimizer)
-        optimizer = torch.optim.Adam([loc], lr=args.learning_rate)  # Adam with default beta and epsilon values
+        # do not set beta but use default beta values
+        optimizer = torch.optim.Adam([loc], lr=args.learning_rate)
     else:
         assert False  # should never happen due to 'choices' in argument parser
 
+    # Init color for line on canvas
     if args.line_color == "red":
         color = (0, 0, 255)
     elif args.line_color == "orange":
@@ -170,6 +170,7 @@ if __name__ == '__main__':
     else:
         assert False  # should never happen due to 'choices' in argument parser
 
+    # get global minima
     global_minima = np.argwhere(image_fn == np.min(image_fn))
     print(f"Positions of global minima (x1, x2):\n{global_minima}")
 
@@ -208,7 +209,7 @@ if __name__ == '__main__':
         cv2.imshow('Progress', vis)
         cv2.waitKey(50)  # 20 fps, tune according to your liking
 
-        # Find a suitable termination condition and break out of loop once done
+        # stop when no improvement in loss (e.g., decrease in loss) for args.epochs_early_stop
         if loss.item() < curr_min_loss:
             curr_min_loss = loss.item()
             num_epochs_no_improvement = 0
@@ -223,6 +224,7 @@ if __name__ == '__main__':
                 time.sleep(args.wait)
                 break
 
+        # stop if maximum number of epochs is reached
         if epoch == args.max_epochs:
             print(
                 f"Epoch {epoch}: Reached maximum number of epochs (stop position {end_point.x1}, {end_point.x2} (x1,"
@@ -231,6 +233,6 @@ if __name__ == '__main__':
             time.sleep(args.wait)
             break
 
-    # check if global minimum was reached
+    # print message to console if a global minimum was reached
     if np.any(np.all(global_minima == np.array((stop_position.x1, stop_position.x2)), axis=1)):
         print("Global minimum reached")
