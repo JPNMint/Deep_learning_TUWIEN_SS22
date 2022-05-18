@@ -30,25 +30,42 @@ class CnnClassifier(Model):
         # You will want to initialize the optimizer and loss function here.
         # Note that PyTorch's cross-entropy loss includes normalization so no softmax is required
 
-        pass
+        # although not necessary (see ) in the comments/docs above, perform some basic sanity checks
+        if not isinstance(net, nn.Module):
+            raise TypeError(f"Argument 'net' has invalid type. Actual: {type(net)}. Expected: {nn.Module}")
+
+        if num_classes < 0:
+            raise ValueError(f"Argument 'num_classes' has invalid value. Actual: {num_classes}. Expected: > 0.")
+
+        net_layers = list(net.children())
+        if len(net_layers) == 0 or not isinstance(net_layers[-1], nn.Linear) or net_layers[-1].out_features != num_classes:
+            raise ValueError(f"Last layer of argument 'net' has to be a linear layer with {num_classes} units.")
+
+        self._net = net
+        self._input_shape = input_shape
+        self._num_classes = num_classes
+
+        # get device based on type of parameters
+        self._device = torch.device("cuda" if next(net.parameters()).is_cuda else "cpu")
+
+        self._criterion = nn.CrossEntropyLoss()
+        # as suggested in comment above (nesterov momentum 0.9)
+        self._optimizer = torch.optim.SGD(net.parameters(), lr=lr, momentum=0.9, weight_decay=wd, nesterov=True)
+
+        # used in predict()
+        self._softmax = nn.Softmax(1)
 
     def input_shape(self) -> tuple:
         '''
         Returns the expected input shape as a tuple.
         '''
-
-        # TODO implement
-
-        pass
+        return self._input_shape
 
     def output_shape(self) -> tuple:
         '''
         Returns the shape of predictions for a single sample as a tuple, which is (num_classes,).
         '''
-
-        # TODO implement
-
-        pass
+        return self._num_classes,
 
     def train(self, data: np.ndarray, labels: np.ndarray) -> float:
         '''
