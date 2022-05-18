@@ -98,7 +98,7 @@ class Accuracy(PerformanceMeasure):
 
         # return something like "accuracy: 0.395"
 
-        return f"acc: {self.accuracy():.3f}"  # format according to output format in ass. 1 part 3
+        return f"val acc: {self.accuracy():.3f}"  # format according to output format in ass. 2 part 2
 
     def __lt__(self, other) -> bool:
         '''
