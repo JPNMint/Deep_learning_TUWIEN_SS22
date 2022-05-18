@@ -51,17 +51,16 @@ def hwc2chw() -> Op:
     Flip a 3D array with shape HWC to shape CHW.
     '''
 
-    # TODO implement (see np.transpose) -- assignment 2/3
-
-    pass
+    return lambda sample: np.transpose(sample, (2, 0, 1))
 
 def hflip() -> Op:
     '''
     Flip arrays with shape HWC horizontally with a probability of 0.5.
     '''
 
-    # TODO implement (numpy.flip will be helpful) -- assignment 2/3
-
+    # TODO implement (numpy.flip will be helpful) -- assignment 2 part 3
+    #if np.random.random() >0.5:
+    #   return np.flip()
     pass
 
 def rcrop(sz: int, pad: int, pad_mode: str) -> Op:
@@ -72,7 +71,7 @@ def rcrop(sz: int, pad: int, pad_mode: str) -> Op:
     Raises ValueError if sz exceeds the array width/height after padding.
     '''
 
-    # TODO implement -- assignment 2/3
+    # TODO implement -- assignment 2 part 3
     # https://numpy.org/doc/stable/reference/generated/numpy.pad.html will be helpful
 
     pass
