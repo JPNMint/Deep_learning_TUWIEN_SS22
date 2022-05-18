@@ -97,12 +97,16 @@ class Fn:
         x1 = loc.x1
         x2 = loc.x2
 
-        # calculate numerical gradient using the formula f'(x) = (f(x+eps) - f(x-eps)) / 2*eps (generalized to two
-        # dimensions)
+        # calculate numerical gradient using the formula f'(x) = f(x+eps)-f(x-eps)/(2*eps)
         # partial derivative in direction x1
-        df_x1 = (self.__call__(Vec2(x1 + self.eps, x2)) - self.__call__(Vec2(x1 + self.eps, x2))) / 2 * self.eps
+        f_x1_plus_eps = self.__call__(Vec2(x1 + self.eps, x2))
+        f_x1_minus_eps = self.__call__(Vec2(x1 - self.eps, x2))
+        df_x1 = (f_x1_plus_eps - f_x1_minus_eps) / (2 * self.eps)
+
         # partial derivative in direction x2
-        df_x2 = (self.__call__(Vec2(x1, x2 + self.eps)) - self.__call__(Vec2(x1, x2 - self.eps))) / 2 * self.eps
+        f_x2_plus_eps = self.__call__(Vec2(x1, x2 + self.eps))
+        f_x2_minus_eps = self.__call__(Vec2(x1, x2 - self.eps))
+        df_x2 = (f_x2_plus_eps - f_x2_minus_eps) / (2 * self.eps)
 
         return Vec2(df_x1, df_x2)
 
@@ -126,7 +130,7 @@ if __name__ == '__main__':
     parser.add_argument('fpath', help='Path to a PNG file encoding the function')
     parser.add_argument('sx1', type=float, help='Initial value of the first argument')
     parser.add_argument('sx2', type=float, help='Initial value of the second argument')
-    parser.add_argument('--max_epochs', type=int, default=2500,
+    parser.add_argument('--max_epochs', type=int, default=3000,
                         help='Maximum number of epochs the optimizer should run')
     parser.add_argument('--epochs_early_stop', type=int, default=50,
                         help='Number of epochs that need to elapse to stop based on the stopping criterion')
@@ -207,7 +211,7 @@ if __name__ == '__main__':
         # Visualize each iteration by drawing on vis
         cv2.line(vis, start_point, end_point, color, thickness=2)
         cv2.imshow('Progress', vis)
-        cv2.waitKey(50)  # 20 fps, tune according to your liking
+        cv2.waitKey(1)  # 20 fps, tune according to your liking
 
         # stop when no improvement in loss (e.g., decrease in loss) for args.epochs_early_stop
         if loss.item() < curr_min_loss:
