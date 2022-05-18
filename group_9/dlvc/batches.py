@@ -57,7 +57,7 @@ class BatchGenerator:
         if num > len(dataset):
             raise ValueError("Batch size must not be larger than dataset length")
 
-        if num < 1:
+        if num <= 0:
             raise ValueError("Batch size must not be smaller than 1")
 
         self.dataset = dataset
