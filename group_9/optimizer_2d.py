@@ -1,3 +1,4 @@
+import time
 from collections import namedtuple
 
 import cv2
@@ -129,7 +130,7 @@ if __name__ == '__main__':
     parser.add_argument('fpath', help='Path to a PNG file encoding the function')
     parser.add_argument('sx1', type=float, help='Initial value of the first argument')
     parser.add_argument('sx2', type=float, help='Initial value of the second argument')
-    parser.add_argument('--max_epochs', type=int, default=4000,
+    parser.add_argument('--max_epochs', type=int, default=2500,
                         help='Maximum number of epochs the optimizer should run')
     parser.add_argument('--epochs_early_stop', type=int, default=50,
                         help='Number of epochs that need to elapse to stop based on the stopping criterion')
@@ -137,7 +138,11 @@ if __name__ == '__main__':
     parser.add_argument('--learning_rate', type=float, default=10.0, help='Learning rate')
     parser.add_argument('--beta', type=float, default=0, help='Beta parameter of momentum (0 = no momentum)')
     parser.add_argument('--nesterov', action='store_true', help='Use Nesterov momentum')
-    # TODO: add parameters for optimizer
+    parser.add_argument('--optimizer', type=str, default="SGD", choices=("SGD", "Adam"), help='Desired optimizer')
+    parser.add_argument('--wait', type=float, default=0,
+                        help='Number of seconds the canvas should still be shown after the optimization is finished ('
+                             'e.g., used to take screenshots)')
+    parser.add_argument('--line_color', type=str, default="red", choices=("red", "orange", "green"))
     args = parser.parse_args()
 
     # Init
@@ -145,18 +150,35 @@ if __name__ == '__main__':
     fn = Fn(image_fn, args.eps)
     vis = fn.visualize()
 
-    print(f"Positions of global minima (x1, x2):\n{np.argwhere(image_fn == np.min(image_fn))}")
-
     # PyTorch uses tensors which are very similar to numpy arrays but hold additional values such as gradients
     loc = torch.tensor([args.sx1, args.sx2], requires_grad=True)
-    # TODO: get corresponding optimizer
-    optimizer = torch.optim.SGD([loc], lr=args.learning_rate, momentum=args.beta, nesterov=args.nesterov)
+    if args.optimizer == "SGD":
+        print("Chosen optimizer: " + args.optimizer)
+        optimizer = torch.optim.SGD([loc], lr=args.learning_rate, momentum=args.beta, nesterov=args.nesterov)
+    elif args.optimizer == "Adam":
+        print("Chosen optimizer: " + args.optimizer)
+        optimizer = torch.optim.Adam([loc], lr=args.learning_rate)  # Adam with default beta and epsilon values
+    else:
+        assert False  # should never happen due to 'choices' in argument parser
+
+    if args.line_color == "red":
+        color = (0, 0, 255)
+    elif args.line_color == "orange":
+        color = (0, 83, 255)
+    elif args.line_color == "green":
+        color = (0, 255, 0)
+    else:
+        assert False  # should never happen due to 'choices' in argument parser
+
+    global_minima = np.argwhere(image_fn == np.min(image_fn))
+    print(f"Positions of global minima (x1, x2):\n{global_minima}")
 
     # Find a minimum in fn using a PyTorch optimizer
     # See https://pytorch.org/docs/stable/optim.html for how to use optimizers
     epoch = 0
     curr_min_loss = float("inf")
     num_epochs_no_improvement = 0
+    stop_position = None
     while True:
         epoch += 1
 
@@ -173,6 +195,8 @@ if __name__ == '__main__':
             print(
                 f"Epoch {epoch}: Function is undefined at this position (stop position {start_point.x1}, "
                 f"{start_point.x2} (x1,x2))")
+            stop_position = start_point
+            time.sleep(args.wait)
             break
 
         optimizer.step()
@@ -180,9 +204,9 @@ if __name__ == '__main__':
         end_point = locToOpenCVPoint(loc)
 
         # Visualize each iteration by drawing on vis
-        cv2.line(vis, start_point, end_point, (0, 83, 255), thickness=2)
+        cv2.line(vis, start_point, end_point, color, thickness=2)
         cv2.imshow('Progress', vis)
-        cv2.waitKey(1)  # 20 fps, tune according to your liking
+        cv2.waitKey(50)  # 20 fps, tune according to your liking
 
         # Find a suitable termination condition and break out of loop once done
         if loss.item() < curr_min_loss:
@@ -195,9 +219,18 @@ if __name__ == '__main__':
                     f"Epoch {epoch}: Stopping criterion fulfilled. No improvement in loss for "
                     f"{args.epochs_early_stop} consecutive epochs (stop position {end_point.x1}, {end_point.x2} (x1,"
                     f"x2))")
+                stop_position = end_point
+                time.sleep(args.wait)
                 break
 
         if epoch == args.max_epochs:
             print(
-                f"Epoch {epoch}: Reached maximum number of epochs (stop position {end_point.x1}, {end_point.x2} (x1,x2))")
+                f"Epoch {epoch}: Reached maximum number of epochs (stop position {end_point.x1}, {end_point.x2} (x1,"
+                f"x2))")
+            stop_position = end_point
+            time.sleep(args.wait)
             break
+
+    # check if global minimum was reached
+    if np.any(np.all(global_minima == np.array((stop_position.x1, stop_position.x2)), axis=1)):
+        print("Global minimum reached")
