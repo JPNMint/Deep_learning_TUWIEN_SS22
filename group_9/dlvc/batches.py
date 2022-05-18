@@ -57,6 +57,9 @@ class BatchGenerator:
         if num > len(dataset):
             raise ValueError("Batch size must not be larger than dataset length")
 
+        if num < 1:
+            raise ValueError("Batch size must not be smaller than 1")
+
         self.dataset = dataset
         self.shuffle = shuffle
         self.op = op if op is not None else lambda x: x
