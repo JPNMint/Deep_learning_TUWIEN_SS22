@@ -75,3 +75,22 @@ def rcrop(sz: int, pad: int, pad_mode: str) -> Op:
     # https://numpy.org/doc/stable/reference/generated/numpy.pad.html will be helpful
 
     pass
+
+
+def normalizePerChannel(mean: np.ndarray, std: np.ndarray) -> Op:
+    """
+    Normalizes an image per channel, i.e., (I - mean)/std where I is an image in (C, H, W) format.
+    """
+    if not isinstance(mean, np.ndarray):
+        raise TypeError(f"Argument 'mean' has invalid type. Actual: {type(mean)}. Exepcted: {np.ndarray}.")
+
+    if not isinstance(std, np.ndarray):
+        raise TypeError(f"Argument 'std' has invalid type. Actual: {type(std)}. Exepcted: {np.ndarray}.")
+
+    if mean.dtype != np.float32:
+        raise ValueError(f"Argument 'mean' has invalid dtype. Actual: {mean.dtype}. Expected: {np.float32}.")
+
+    if std.dtype != np.float32:
+        raise ValueError(f"Argument 'std' has invalid dtype. Actual: {std.dtype}. Expected: {np.float32}.")
+
+    return lambda sample: (sample - mean)/std
