@@ -63,6 +63,7 @@ class PerrosYGatosNet(nn.Module):
     """
     Our own CNN architecture -- Perros-y-Gatos-Net -- a CNN for classifying cats and dogs images.
     """
+
     def __init__(self, num_classes):
         super().__init__()
         self.net = nn.Sequential(
@@ -132,7 +133,8 @@ def test():
 
 
 if __name__ == '__main__':
-    # using arguments allows us to quickly change parameters and evaluate different settings and is less error-prone than hard coding them
+    # using arguments allows us to quickly change parameters and evaluate different settings and is less error-prone
+    # than hard coding the corresponding values
     parser = argparse.ArgumentParser(
         description='Train a CNN for cats and dogs images using Stochastic Gradient Descent (SGD) with Nesterov '
                     'Momentum')
@@ -143,7 +145,8 @@ if __name__ == '__main__':
                         help='Batch size')
     parser.add_argument('--learning_rate', type=float, default=1e-2, help='Learning rate for SGD')
     parser.add_argument('--weight_decay', type=float, default=0., help='Weight decay for SGD')
-    parser.add_argument('--net', type=str, default="PerrosYGatosNet", choices=("BaselineCNN", "PerrosYGatosNet"), help='CNN architecture/network that should be used')
+    parser.add_argument('--net', type=str, default="PerrosYGatosNet", choices=("BaselineCNN", "PerrosYGatosNet"),
+                        help='CNN architecture/network that should be used')
     parser.add_argument('--per_channel_norm', action='store_true', help='Use per-channel normalization')
     args = parser.parse_args()
 

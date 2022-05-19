@@ -42,6 +42,7 @@ class PerrosYGatosNet(nn.Module):
     Our own CNN architecture -- Perros-y-Gatos-Net -- a CNN for classifying cats and dogs images.
     Enhanced with Dropout layers.
     """
+
     def __init__(self, num_classes, dropout=False, p=0.5, p_2d=0.25):
         super().__init__()
         self.net = nn.Sequential(
