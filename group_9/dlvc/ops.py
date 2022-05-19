@@ -62,6 +62,14 @@ def hflip() -> Op:
     return lambda sample: np.flip(sample, axis=0) if np.random.random() < 0.5 else sample
 
 
+def vflip() -> Op:
+    '''
+    Flip arrays with shape HWC vertically with a probability of 0.5.
+    '''
+
+    return lambda sample: np.flip(sample, axis=1) if np.random.random() < 0.5 else sample
+
+
 def rcrop(sz: int, pad: int, pad_mode: str) -> Op:
     '''
     Extract a square random crop of size sz from arrays with shape HWC.
