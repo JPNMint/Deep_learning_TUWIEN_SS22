@@ -1,3 +1,4 @@
+import random
 from typing import List, Callable
 
 import numpy as np
@@ -58,10 +59,8 @@ def hflip() -> Op:
     Flip arrays with shape HWC horizontally with a probability of 0.5.
     '''
 
-    # TODO implement (numpy.flip will be helpful) -- assignment 2 part 3
-    #if np.random.random() >0.5:
-    #   return np.flip()
-    pass
+    return lambda sample: np.flip(sample, axis=0) if np.random.random() < 0.5 else sample
+
 
 def rcrop(sz: int, pad: int, pad_mode: str) -> Op:
     '''
@@ -71,10 +70,23 @@ def rcrop(sz: int, pad: int, pad_mode: str) -> Op:
     Raises ValueError if sz exceeds the array width/height after padding.
     '''
 
-    # TODO implement -- assignment 2 part 3
     # https://numpy.org/doc/stable/reference/generated/numpy.pad.html will be helpful
+    def _rcrop(sample: np.ndarray) -> np.ndarray:
+        if pad > 0:
+            sample = np.pad(sample, ((pad, pad), (pad, pad), (0, 0)), pad_mode)
 
-    pass
+        if sample.shape[0] < sz:
+            raise ValueError(f"Invalid value for argument 'sz'. Actual: {sz}. Expected: <= {sample.shape[0]}.")
+
+        if sample.shape[1] < sz:
+            raise ValueError(f"Invalid value for argument 'sz'. Actual: {sz}. Expected: <= {sample.shape[1]}.")
+
+        y = np.random.randint((sample.shape[0] - sz) + 1)
+        x = np.random.randint((sample.shape[1] - sz) + 1)
+
+        return sample[y:y+sz, x:x+sz]
+
+    return _rcrop
 
 
 def normalizePerChannel(mean: np.ndarray, std: np.ndarray) -> Op:
