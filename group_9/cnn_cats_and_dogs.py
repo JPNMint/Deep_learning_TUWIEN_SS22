@@ -132,7 +132,7 @@ def test():
 
 
 if __name__ == '__main__':
-    # parse arguments (needed/re-used in cnn_cats_and_dogs_pt3.py)
+    # using arguments allows us to quickly change parameters and evaluate different settings and is less error-prone than hard coding them
     parser = argparse.ArgumentParser(
         description='Train a CNN for cats and dogs images using Stochastic Gradient Descent (SGD) with Nesterov '
                     'Momentum')
@@ -147,8 +147,9 @@ if __name__ == '__main__':
     parser.add_argument('--per_channel_norm', action='store_true', help='Use per-channel normalization')
     args = parser.parse_args()
 
+    # print the current setup (chosen parameters) to console
     print("====================\nSETUP\n====================")
-    print("".join([f"{k}:{v}\n" for k, v in vars(args).items()]), end="")  # TODO: format output
+    print("".join([f"{k}:{v}\n" for k, v in vars(args).items()]), end="")
     print("====================")
 
     model_filepath = os.path.join(os.curdir, f"ex2_pt2_{args.net}_model.pt")
