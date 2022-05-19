@@ -161,9 +161,8 @@ if __name__ == '__main__':
     if args.per_channel_norm:
         ops_chain.append(ops.normalizePerChannel(training_set_stats["mean"], training_set_stats["std"]))
     else:
-        ops_chain.append(ops.add(-127.5))
-        ops_chain.append(ops.mul(1 / 127.5))
-    ops_chain.append(ops.hwc2chw())
+        ops_chain += [ops.add(-127.5), (ops.mul(1 / 127.5))]
+    ops_chain += [ops.hwc2chw()]
     op = ops.chain(ops_chain)
 
     # load training and validation batches
