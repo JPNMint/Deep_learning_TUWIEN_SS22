@@ -1,7 +1,6 @@
 import argparse
 import os
 import random
-from statistics import mean, stdev
 
 import dlvc.batches as batches
 import dlvc.datasets.pets as datasets
@@ -13,7 +12,14 @@ from dlvc.test import Accuracy
 import numpy as np
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
+
+input_shape = (0, 3, 32, 32)
+
+# used for per-channel normalization (calculated in calc_training_set_stats.py)
+training_set_stats = {
+    "mean": np.array([105.653984, 117.07664, 126.680565], dtype=np.float32),
+    "std": np.array([64.33777, 63.024414, 64.452705], dtype=np.float32)
+}
 
 
 def seed(seed_value=29):
@@ -30,27 +36,54 @@ def seed(seed_value=29):
 
 class BaselineCNN(nn.Module):
     """
-    Baseline CNN model from the PyTorch Tutorial.
+    CNN model from the PyTorch Tutorial with adapted linear layers.
     Source: https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html, Accessed: 2022-05-18
     """
 
     def __init__(self, num_classes):
         super().__init__()
-        self.conv1 = nn.Conv2d(3, 6, 5)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(6, 16, 5)
-        self.fc1 = nn.Linear(16 * 5 * 5, 120)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, num_classes)
+        self.net = nn.Sequential(
+            nn.Conv2d(3, 6, 5),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(2, 2),
+            nn.Conv2d(6, 16, 5),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(2, 2),
+            nn.Flatten(),
+            nn.Linear(16 * 5 * 5, 64),
+            nn.ReLU(inplace=True),
+            nn.Linear(64, num_classes),
+        )
 
     def forward(self, x):
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
-        x = torch.flatten(x, 1)  # flatten all dimensions except batch
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = self.fc3(x)
-        return x
+        return self.net(x)
+
+
+class PerrosYGatosNet(nn.Module):
+    """
+    Our own CNN architecture -- Perros-y-Gatos-Net -- a CNN for classifying cats and dogs images.
+    """
+    def __init__(self, num_classes):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Conv2d(3, 32, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(32, 32, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Conv2d(32, 64, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(64, 64, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.AvgPool2d(kernel_size=6),
+            nn.Flatten(),
+            nn.Linear(256, 128),
+            nn.ReLU(inplace=True),
+            nn.Linear(128, num_classes)
+        )
+
+    def forward(self, x):
+        return self.net(x)
 
 
 def train():
@@ -64,9 +97,9 @@ def train():
             labels = train_batch.label
             train_loss.append(clf.train(data, labels))
 
-        # Note: Calculating the mean and standard deviation of the loss this way may introduce a slight bias if the
-        # number of samples in the dataset is not a multiple of the batch size
-        print(f"train loss: {mean(train_loss):.3f} ± {stdev(train_loss):.3f}")
+        train_loss_np = np.array(train_loss)
+
+        print(f"train loss: {np.mean(train_loss_np):.3f} ± {np.std(train_loss_np):.3f}")
 
         val_acc_curr = Accuracy()
         for val_batch in val_batches:
@@ -86,9 +119,8 @@ def train():
 
 def test():
     net.load_state_dict(torch.load(os.path.join(os.curdir, model_filepath)))
-    net.eval()
-    test_acc = Accuracy()
 
+    test_acc = Accuracy()
     with torch.no_grad():
         for test_batch in test_batches:
             data = test_batch.data
@@ -96,38 +128,42 @@ def test():
             output = clf.predict(data)
             test_acc.update(output, label)
 
-    print(f"test acc {test_acc.accuracy()}")
+    print(f"test acc {test_acc.accuracy():.3f}")
 
 
 if __name__ == '__main__':
+    # parse arguments (needed/re-used in cnn_cats_and_dogs_pt3.py)
     parser = argparse.ArgumentParser(
         description='Train a CNN for cats and dogs images using Stochastic Gradient Descent (SGD) with Nesterov '
                     'Momentum')
     parser.add_argument('--dataset_path', type=str, default=os.path.join(os.pardir, "cifar-10-batches-py"))
-    parser.add_argument('--max_epochs', type=int, default=150,
+    parser.add_argument('--max_epochs', type=int, default=100,
                         help='Maximum number of training epochs')
     parser.add_argument('--batch_size', type=int, default=128,
                         help='Batch size')
     parser.add_argument('--learning_rate', type=float, default=1e-2, help='Learning rate for SGD')
     parser.add_argument('--weight_decay', type=float, default=0., help='Weight decay for SGD')
+    parser.add_argument('--net', type=str, default="PerrosYGatosNet", choices=("BaselineCNN", "PerrosYGatosNet"), help='CNN architecture/network that should be used')
+    parser.add_argument('--per_channel_norm', action='store_true', help='Use per-channel normalization')
     args = parser.parse_args()
 
     print("====================\nSETUP\n====================")
     print("".join([f"{k}:{v}\n" for k, v in vars(args).items()]), end="")  # TODO: format output
     print("====================")
 
-    model_filepath = os.path.join(os.curdir, "saved_models",
-                                  f"model_batch-size-{args.batch_size}_lr-{args.learning_rate}_wd-{args.weight_decay}.pt")
+    model_filepath = os.path.join(os.curdir, f"ex2_pt2_{args.net}_model.pt")
 
     # reset seeds
     seed()
 
-    op = ops.chain([
-        ops.type_cast(np.float32),
-        ops.add(-127.5),
-        ops.mul(1 / 127.5),
-        ops.hwc2chw()
-    ])
+    ops_chain = [ops.type_cast(np.float32)]
+    if args.per_channel_norm:
+        ops_chain.append(ops.normalizePerChannel(training_set_stats["mean"], training_set_stats["std"]))
+    else:
+        ops_chain.append(ops.add(-127.5))
+        ops_chain.append(ops.mul(1 / 127.5))
+    ops_chain.append(ops.hwc2chw())
+    op = ops.chain(ops_chain)
 
     # load training and validation batches
     train_set = datasets.PetsDataset(args.dataset_path, Subset.TRAINING)
@@ -139,8 +175,15 @@ if __name__ == '__main__':
     # create network and wrap in CnnClassifier
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # use CUDA, if available
     num_classes = train_set.num_classes()
-    net = BaselineCNN(num_classes).to(device=device)
-    clf = CnnClassifier(net, input_shape=(0, 3, 32, 32), num_classes=num_classes, lr=args.learning_rate,
+
+    if args.net == "BaselineCNN":
+        net = BaselineCNN(num_classes).to(device=device)
+    elif args.net == "PerrosYGatosNet":
+        net = PerrosYGatosNet(num_classes).to(device=device)
+    else:
+        assert False  # should never happen due to 'choices' in argument parser
+
+    clf = CnnClassifier(net, input_shape=input_shape, num_classes=num_classes, lr=args.learning_rate,
                         wd=args.weight_decay)
 
     # start training procedure
