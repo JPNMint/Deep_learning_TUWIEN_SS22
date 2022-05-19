@@ -37,10 +37,6 @@ class CnnClassifier(Model):
         if num_classes < 0:
             raise ValueError(f"Argument 'num_classes' has invalid value. Actual: {num_classes}. Expected: > 0.")
 
-        net_layers = list(net.children())
-        if len(net_layers) == 0 or not isinstance(net_layers[-1], nn.Linear) or net_layers[-1].out_features != num_classes:
-            raise ValueError(f"Last layer of argument 'net' has to be a linear layer with {num_classes} units.")
-
         self._net = net
         self._input_shape = input_shape
         self._num_classes = num_classes
