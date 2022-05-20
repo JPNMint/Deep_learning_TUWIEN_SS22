@@ -9,11 +9,11 @@ import dlvc.ops as ops
 
 import numpy as np
 
-# put all images in one batch
+# put all images in one batch (assumes that dataset is stored in parent directory)
 train_set = datasets.PetsDataset(os.path.join(os.pardir, "cifar-10-batches-py"), Subset.TRAINING)
 train_batches = batches.BatchGenerator(train_set, len(train_set), False, ops.chain([ops.type_cast(np.float32)]))
 
-# get the data of the single batch (N, H, W, C)
+# get the data of the single batch (N, H, W, C) and calculate statistics
 data = next(b for b in train_batches).data
 mean = np.mean(data, axis=(0, 1, 2))
 std = np.std(data, axis=(0, 1, 2))
