@@ -134,12 +134,9 @@ weight_decay = 1e-3
 # reset seeds
 seed()
 
-train_ops_list = [ops.type_cast(np.float32)]
-train_ops_list.append(ops.normalizePerChannel(training_set_stats["mean"], training_set_stats["std"]))
+train_ops_list = [ops.type_cast(np.float32), ops.normalizePerChannel(training_set_stats["mean"], training_set_stats["std"])]
 
-test_val_ops_list = [ops.type_cast(np.float32)]
-test_val_ops_list.append(ops.normalizePerChannel(training_set_stats["mean"], training_set_stats["std"]))
-test_val_ops_list.append(ops.hwc2chw())
+test_val_ops_list = [ops.type_cast(np.float32), ops.normalizePerChannel(training_set_stats["mean"], training_set_stats["std"]), ops.hwc2chw()]
 test_val_ops = ops.chain(test_val_ops_list)
 
 # load training and validation batches

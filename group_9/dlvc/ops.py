@@ -1,6 +1,7 @@
 import random
 from typing import List, Callable
 
+import cv2
 import numpy as np
 
 # All operations are functions that take and return numpy arrays
@@ -114,3 +115,14 @@ def normalizePerChannel(mean: np.ndarray, std: np.ndarray) -> Op:
         raise ValueError(f"Argument 'std' has invalid dtype. Actual: {std.dtype}. Expected: {np.float32}.")
 
     return lambda sample: (sample - mean)/std
+
+
+def resize(size: tuple) -> Op:
+    """
+    Resizes an image using bilinear interpolation.
+    """
+    if len(size) != 2:
+        raise ValueError(f"Argument 'size' has invalid length. Actual: {len(size)}. Expected: 2.")
+
+    return lambda sample: cv2.resize(sample, dsize=size)
+
