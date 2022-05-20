@@ -36,7 +36,7 @@ def seed(seed_value=29):
 
 class BaselineCNN(nn.Module):
     """
-    CNN model from the PyTorch Tutorial with adapted linear layers.
+    CNN model from the PyTorch Tutorial with adapted fully-connected layers.
     Source: https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html, Accessed: 2022-05-18
     """
 
